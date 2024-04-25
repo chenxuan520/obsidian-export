@@ -690,7 +690,12 @@ impl<'a> Exporter<'a> {
 
         if let Some(section) = reference.section {
             link.push('#');
-            link.push_str(&slugify(section));
+            if self.contains_chinese(section) {
+                let replaced_spaces = section.replace(" ", "-");
+                link.push_str(&replaced_spaces);
+            } else {
+                link.push_str(&slugify(section));
+            }
         }
 
         let link_tag = pulldown_cmark::Tag::Link(
@@ -704,6 +709,19 @@ impl<'a> Exporter<'a> {
             Event::Text(CowStr::from(reference.display())),
             Event::End(link_tag.clone()),
         ]
+    }
+
+    fn contains_chinese(&self, text: &str) -> bool {
+        for c in text.chars() {
+            if self.is_chinese_char(c) {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn is_chinese_char(&self, c: char) -> bool {
+        '\u{4E00}' <= c && c <= '\u{9FFF}'
     }
 }
 
